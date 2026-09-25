@@ -22,10 +22,10 @@ export function Summary({ totals }: SummaryProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <SummaryCard
-        icon={CalendarDays}
-        title="Daily rate"
-        description="Average per day"
-        value={totals.dailyRate}
+        icon={Wallet}
+        title="Total per month"
+        description="All items together"
+        value={totals.totalMonthly}
       />
       <SummaryCard
         icon={CalendarRange}
@@ -34,10 +34,10 @@ export function Summary({ totals }: SummaryProps) {
         value={totals.weeklyRate}
       />
       <SummaryCard
-        icon={Wallet}
-        title="Total per month"
-        description="All items together"
-        value={totals.totalMonthly}
+        icon={CalendarDays}
+        title="Daily rate"
+        description="Average per day"
+        value={totals.dailyRate}
       />
     </div>
   )
