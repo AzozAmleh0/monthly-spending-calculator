@@ -53,7 +53,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto w-full max-w-6xl px-4 pb-10">
+      <div className="mx-auto w-full max-w-[1600px] px-4 pb-10">
         <header className="py-6">
           <h1 className="font-heading text-2xl font-semibold">
             Monthly Spending Calculator
@@ -63,7 +63,9 @@ export default function App() {
           </p>
         </header>
 
-        <div className="grid items-start gap-6 md:grid-cols-2">
+        {/* Even halves on medium screens; from xl the left column is a fixed
+            600px and the calculations take the rest, so they get the wider half. */}
+        <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-[600px_minmax(0,1fr)]">
           {/* Left: form + items. Sticky on desktop, normal flow on phones. */}
           <div className="flex flex-col gap-6 md:sticky md:top-0 md:h-screen md:overflow-hidden md:py-6">
             <Card>
