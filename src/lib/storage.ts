@@ -1,12 +1,20 @@
 import type { Frequency, Item, Period } from "@/types"
 
 const STORAGE_KEY = "spending-calculator:items"
-const STORAGE_VERSION = 1
+const STORAGE_VERSION = 2
 
-type StoredData = {
-  version: number
+/** Everything the app keeps on the device. */
+export type StoredState = {
   items: Item[]
+  /** Monthly income in ILS. 0 means "not set yet". */
+  income: number
 }
+
+type StoredData = StoredState & {
+  version: number
+}
+
+export const emptyState: StoredState = { items: [], income: 0 }
 
 const PERIODS: Period[] = ["day", "week", "month", "year"]
 
@@ -37,6 +45,10 @@ function isFrequency(value: unknown): value is Frequency {
   }
 }
 
+export function isIncome(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+}
+
 function isItem(value: unknown): value is Item {
   if (typeof value !== "object" || value === null) return false
   const item = value as Record<string, unknown>
@@ -53,30 +65,33 @@ function isItem(value: unknown): value is Item {
 }
 
 /**
- * Reads the saved items. Returns an empty list if nothing is saved or the
- * saved data cannot be read.
+ * Reads the saved items and income. Returns empty values if nothing is saved
+ * or the saved data cannot be read. Data written by version 1 (which had no
+ * income) still loads.
  */
-export function loadItems(): Item[] {
+export function loadState(): StoredState {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
+    if (!raw) return emptyState
 
     const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== "object" || parsed === null) return []
+    if (typeof parsed !== "object" || parsed === null) return emptyState
 
-    const { items } = parsed as Partial<StoredData>
-    if (!Array.isArray(items)) return []
+    const { items, income } = parsed as Partial<StoredData>
 
-    return items.filter(isItem)
+    return {
+      items: Array.isArray(items) ? items.filter(isItem) : [],
+      income: isIncome(income) ? income : 0,
+    }
   } catch {
-    return []
+    return emptyState
   }
 }
 
-/** Writes the full items list. Failures are ignored so the app keeps working. */
-export function saveItems(items: Item[]): void {
+/** Writes the full state. Failures are ignored so the app keeps working. */
+export function saveState(state: StoredState): void {
   try {
-    const data: StoredData = { version: STORAGE_VERSION, items }
+    const data: StoredData = { version: STORAGE_VERSION, ...state }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   } catch {
     // Storage can be unavailable (private mode, quota). Nothing to do.

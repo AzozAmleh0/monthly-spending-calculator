@@ -1,13 +1,16 @@
+import type { ReactNode } from "react"
 import { CalendarDays, CalendarRange, Wallet } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/format"
 import type { Totals } from "@/lib/calculations"
 
@@ -45,9 +48,22 @@ type SummaryCardProps = {
   title: string
   description: string
   value: number
+  /** Shown in the top right of the card, e.g. an edit button. */
+  action?: ReactNode
+  valueClassName?: string
+  /** Replaces the value, e.g. with an input while editing. */
+  children?: ReactNode
 }
 
-function SummaryCard({ icon: Icon, title, description, value }: SummaryCardProps) {
+export function SummaryCard({
+  icon: Icon,
+  title,
+  description,
+  value,
+  action,
+  valueClassName,
+  children,
+}: SummaryCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -56,11 +72,19 @@ function SummaryCard({ icon: Icon, title, description, value }: SummaryCardProps
           {title}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
+        {action && <CardAction>{action}</CardAction>}
       </CardHeader>
       <CardContent>
-        <p className="font-heading text-2xl font-semibold tabular-nums">
-          {formatCurrency(value)}
-        </p>
+        {children ?? (
+          <p
+            className={cn(
+              "font-heading text-2xl font-semibold tabular-nums",
+              valueClassName,
+            )}
+          >
+            {formatCurrency(value)}
+          </p>
+        )}
       </CardContent>
     </Card>
   )

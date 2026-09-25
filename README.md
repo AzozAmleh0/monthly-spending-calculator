@@ -4,8 +4,9 @@ A small web app for working out what recurring expenses cost every month.
 
 Add each expense with a name, a price in shekels (₪) and how often you pay it,
 and the app shows your total per month, your average daily and weekly spending,
-and the monthly cost of every single item. Items can be edited and deleted, and
-they are saved on the device.
+and the monthly cost of every single item. Set your monthly income and it also
+shows what is left after the expenses. Items can be edited and deleted, and
+everything is saved on the device.
 
 **Live app:** https://azozamleh0.github.io/monthly-spending-calculator/
 
@@ -13,6 +14,8 @@ they are saved on the device.
 
 - Frequencies: daily, weekly, monthly, yearly, "X times per period" (e.g. 2
   times per day) and "every N periods" (e.g. every 2 days).
+- Monthly income, editable with the pencil on the income card, and a card for
+  what is left after all the expenses.
 - Totals update instantly on every add, edit or delete.
 - Everything is stored in the browser's `localStorage` — no account, no backend,
   no sync. Each device keeps its own list.
@@ -77,7 +80,7 @@ src/
     ui/                shadcn components
   lib/
     calculations.ts    occurrencesPerYear, monthlyCost, totals
-    storage.ts         load and save items in localStorage
+    storage.ts         load and save items and income in localStorage
     format.ts          ILS formatting and frequency labels
     schema.ts          zod schema for the item form
   types.ts
@@ -90,5 +93,5 @@ publishes `dist/` to GitHub Pages.
 
 ## A note on the data
 
-Items live in the browser on each device. They do not sync between devices, and
-clearing the browser's site data for the app deletes them.
+Items and your income live in the browser on each device. They do not sync
+between devices, and clearing the browser's site data for the app deletes them.

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 
+import { Balance } from "@/components/Balance"
 import { DeleteConfirm } from "@/components/DeleteConfirm"
 import { ItemBreakdown } from "@/components/ItemBreakdown"
 import { ItemForm } from "@/components/ItemForm"
@@ -15,36 +16,44 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { calculateTotals } from "@/lib/calculations"
-import { loadItems, saveItems } from "@/lib/storage"
+import { loadState, saveState } from "@/lib/storage"
+import type { StoredState } from "@/lib/storage"
 import type { Item, ItemDraft } from "@/types"
 
 export default function App() {
-  const [items, setItems] = useState<Item[]>(() => loadItems())
+  const [state, setState] = useState(() => loadState())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+
+  const { items, income } = state
 
   const editingItem = items.find((item) => item.id === editingId) ?? null
   const totals = useMemo(() => calculateTotals(items), [items])
 
-  /** Every change to the list is mirrored to localStorage right away. */
-  const commit = (next: Item[]) => {
-    setItems(next)
-    saveItems(next)
+  /** Every change is mirrored to localStorage right away. */
+  const commit = (next: Partial<StoredState>) => {
+    const merged = { ...state, ...next }
+    setState(merged)
+    saveState(merged)
   }
 
+  const commitItems = (nextItems: Item[]) => commit({ items: nextItems })
+
   const handleAdd = (draft: ItemDraft) => {
-    commit([...items, { id: crypto.randomUUID(), ...draft }])
+    commitItems([...items, { id: crypto.randomUUID(), ...draft }])
   }
 
   const handleSave = (id: string, draft: ItemDraft) => {
-    commit(items.map((item) => (item.id === id ? { ...item, ...draft } : item)))
+    commitItems(
+      items.map((item) => (item.id === id ? { ...item, ...draft } : item)),
+    )
     setEditingId(null)
   }
 
   const handleDelete = () => {
     if (!itemToDelete) return
 
-    commit(items.filter((item) => item.id !== itemToDelete.id))
+    commitItems(items.filter((item) => item.id !== itemToDelete.id))
     if (editingId === itemToDelete.id) {
       setEditingId(null)
     }
@@ -108,6 +117,11 @@ export default function App() {
           {/* Right: calculations. Scrolls with the page. */}
           <div className="flex flex-col gap-6 md:py-6">
             <Summary totals={totals} />
+            <Balance
+              income={income}
+              totalMonthly={totals.totalMonthly}
+              onIncomeChange={(next) => commit({ income: next })}
+            />
             <ItemBreakdown items={items} totalMonthly={totals.totalMonthly} />
           </div>
         </div>
