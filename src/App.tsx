@@ -62,7 +62,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto w-full max-w-[1600px] px-4 pb-10">
+      <div className="mx-auto w-full max-w-[1250px] px-4 pb-10">
         <header className="py-6">
           <h1 className="font-heading text-2xl font-semibold">
             Monthly Spending Calculator
