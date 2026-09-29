@@ -18,6 +18,10 @@ everything is saved on the device.
   what is left after all the expenses.
 - Saved lists: give the current items and income a name, then load that list
   back later, replace it, or delete it.
+- Switch any item off to keep it in the list but leave it out of every total,
+  and back on when you want it counted again.
+- The monthly cost table sorts by item name, by how often you pay, or by what
+  it costs per month.
 - Totals update instantly on every add, edit or delete.
 - Everything is stored in the browser's `localStorage` — no account, no backend,
   no sync. Each device keeps its own list.

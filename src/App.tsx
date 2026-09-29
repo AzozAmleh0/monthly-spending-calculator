@@ -29,7 +29,10 @@ export default function App() {
   const { items, income } = state
 
   const editingItem = items.find((item) => item.id === editingId) ?? null
-  const totals = useMemo(() => calculateTotals(items), [items])
+  // Switched-off items stay in the list but are left out of every total.
+  const activeItems = useMemo(() => items.filter((item) => item.enabled), [items])
+  const totals = useMemo(() => calculateTotals(activeItems), [activeItems])
+  const offCount = items.length - activeItems.length
 
   /** Every change is mirrored to localStorage right away. */
   const commit = (next: Partial<StoredState>) => {
@@ -41,7 +44,7 @@ export default function App() {
   const commitItems = (nextItems: Item[]) => commit({ items: nextItems })
 
   const handleAdd = (draft: ItemDraft) => {
-    commitItems([...items, { id: crypto.randomUUID(), ...draft }])
+    commitItems([...items, { id: crypto.randomUUID(), enabled: true, ...draft }])
   }
 
   const handleSave = (id: string, draft: ItemDraft) => {
@@ -49,6 +52,12 @@ export default function App() {
       items.map((item) => (item.id === id ? { ...item, ...draft } : item)),
     )
     setEditingId(null)
+  }
+
+  const handleToggle = (id: string, enabled: boolean) => {
+    commitItems(
+      items.map((item) => (item.id === id ? { ...item, enabled } : item)),
+    )
   }
 
   const handleLoadList = (list: SavedList) => {
@@ -106,6 +115,7 @@ export default function App() {
                 <CardTitle>Your items</CardTitle>
                 <CardDescription>
                   {items.length === 1 ? "1 item" : `${items.length} items`}
+                  {offCount > 0 && ` · ${offCount} switched off`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="md:min-h-0 md:flex-1">
@@ -115,6 +125,7 @@ export default function App() {
                     editingId={editingId}
                     onEdit={(item) => setEditingId(item.id)}
                     onRequestDelete={setItemToDelete}
+                    onToggle={handleToggle}
                   />
                 </ScrollArea>
               </CardContent>
@@ -129,7 +140,10 @@ export default function App() {
               totalMonthly={totals.totalMonthly}
               onIncomeChange={(next) => commit({ income: next })}
             />
-            <ItemBreakdown items={items} totalMonthly={totals.totalMonthly} />
+            <ItemBreakdown
+              items={activeItems}
+              totalMonthly={totals.totalMonthly}
+            />
             <SavedLists items={items} income={income} onLoad={handleLoadList} />
           </div>
         </div>

@@ -9,6 +9,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { formatCurrency, frequencyLabel } from "@/lib/format"
@@ -19,6 +20,7 @@ type ItemsListProps = {
   editingId: string | null
   onEdit: (item: Item) => void
   onRequestDelete: (item: Item) => void
+  onToggle: (id: string, enabled: boolean) => void
 }
 
 export function ItemsList({
@@ -26,6 +28,7 @@ export function ItemsList({
   editingId,
   onEdit,
   onRequestDelete,
+  onToggle,
 }: ItemsListProps) {
   if (items.length === 0) {
     return (
@@ -49,13 +52,22 @@ export function ItemsList({
               item.id === editingId && "bg-muted ring-1 ring-foreground/10",
             )}
           >
-            <div className="min-w-0 flex-1">
+            {/* No tooltip here: a tooltip trigger takes over the switch's
+                own data-state, which is what colours it. */}
+            <Switch
+              checked={item.enabled}
+              aria-label={`Count ${item.name} in the totals`}
+              onCheckedChange={(checked) => onToggle(item.id, checked)}
+            />
+
+            <div className={cn("min-w-0 flex-1", !item.enabled && "opacity-60")}>
               <p className="truncate font-medium">{item.name}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   {formatCurrency(item.price)}
                 </span>
                 <Badge variant="secondary">{frequencyLabel(item.frequency)}</Badge>
+                {!item.enabled && <Badge variant="outline">Off</Badge>}
               </div>
             </div>
 

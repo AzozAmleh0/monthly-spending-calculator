@@ -15,9 +15,12 @@ export type Item = {
   name: string
   price: number
   frequency: Frequency
+  /** Switched-off items stay in the list but are left out of every total. */
+  enabled: boolean
 }
 
-export type ItemDraft = Omit<Item, "id">
+/** What the form produces: the rest of an item is managed by the app. */
+export type ItemDraft = Omit<Item, "id" | "enabled">
 
 /** A named copy of the whole list, kept so it can be loaded back later. */
 export type SavedList = {

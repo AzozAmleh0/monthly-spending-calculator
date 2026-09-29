@@ -51,11 +51,15 @@ export function isIncome(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
 }
 
-function isItem(value: unknown): value is Item {
-  if (typeof value !== "object" || value === null) return false
+/**
+ * Validates one saved item and fills in anything a older version did not
+ * write. Returns null when it cannot be trusted.
+ */
+function toItem(value: unknown): Item | null {
+  if (typeof value !== "object" || value === null) return null
   const item = value as Record<string, unknown>
 
-  return (
+  const isValid =
     typeof item.id === "string" &&
     item.id.length > 0 &&
     typeof item.name === "string" &&
@@ -63,7 +67,25 @@ function isItem(value: unknown): value is Item {
     Number.isFinite(item.price) &&
     item.price > 0 &&
     isFrequency(item.frequency)
-  )
+
+  if (!isValid) return null
+
+  return {
+    id: item.id as string,
+    name: item.name as string,
+    price: item.price as number,
+    frequency: item.frequency as Item["frequency"],
+    // Items saved before the switch existed were all counted.
+    enabled: item.enabled !== false,
+  }
+}
+
+function toItems(value: unknown): Item[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map(toItem)
+    .filter((item): item is Item => item !== null)
 }
 
 /**
@@ -82,7 +104,7 @@ export function loadState(): StoredState {
     const { items, income } = parsed as Partial<StoredData>
 
     return {
-      items: Array.isArray(items) ? items.filter(isItem) : [],
+      items: toItems(items),
       income: isIncome(income) ? income : 0,
     }
   } catch {
@@ -105,20 +127,28 @@ type StoredSavedLists = {
   lists: SavedList[]
 }
 
-function isSavedList(value: unknown): value is SavedList {
-  if (typeof value !== "object" || value === null) return false
+function toSavedList(value: unknown): SavedList | null {
+  if (typeof value !== "object" || value === null) return null
   const list = value as Record<string, unknown>
 
-  return (
+  const isValid =
     typeof list.id === "string" &&
     list.id.length > 0 &&
     typeof list.name === "string" &&
     list.name.trim().length > 0 &&
     typeof list.savedAt === "string" &&
     Array.isArray(list.items) &&
-    list.items.every(isItem) &&
     isIncome(list.income)
-  )
+
+  if (!isValid) return null
+
+  return {
+    id: list.id as string,
+    name: list.name as string,
+    savedAt: list.savedAt as string,
+    items: toItems(list.items),
+    income: list.income as number,
+  }
 }
 
 /** Reads the named saves. Anything unreadable comes back as an empty list. */
@@ -132,7 +162,11 @@ export function loadSavedLists(): SavedList[] {
 
     const { lists } = parsed as Partial<StoredSavedLists>
 
-    return Array.isArray(lists) ? lists.filter(isSavedList) : []
+    if (!Array.isArray(lists)) return []
+
+    return lists
+      .map(toSavedList)
+      .filter((list): list is SavedList => list !== null)
   } catch {
     return []
   }
