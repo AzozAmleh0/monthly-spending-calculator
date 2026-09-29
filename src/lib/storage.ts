@@ -1,7 +1,9 @@
-import type { Frequency, Item, Period } from "@/types"
+import type { Frequency, Item, Period, SavedList } from "@/types"
 
 const STORAGE_KEY = "spending-calculator:items"
+const SAVED_LISTS_KEY = "spending-calculator:saved-lists"
 const STORAGE_VERSION = 2
+const SAVED_LISTS_VERSION = 1
 
 /** Everything the app keeps on the device. */
 export type StoredState = {
@@ -93,6 +95,54 @@ export function saveState(state: StoredState): void {
   try {
     const data: StoredData = { version: STORAGE_VERSION, ...state }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    // Storage can be unavailable (private mode, quota). Nothing to do.
+  }
+}
+
+type StoredSavedLists = {
+  version: number
+  lists: SavedList[]
+}
+
+function isSavedList(value: unknown): value is SavedList {
+  if (typeof value !== "object" || value === null) return false
+  const list = value as Record<string, unknown>
+
+  return (
+    typeof list.id === "string" &&
+    list.id.length > 0 &&
+    typeof list.name === "string" &&
+    list.name.trim().length > 0 &&
+    typeof list.savedAt === "string" &&
+    Array.isArray(list.items) &&
+    list.items.every(isItem) &&
+    isIncome(list.income)
+  )
+}
+
+/** Reads the named saves. Anything unreadable comes back as an empty list. */
+export function loadSavedLists(): SavedList[] {
+  try {
+    const raw = window.localStorage.getItem(SAVED_LISTS_KEY)
+    if (!raw) return []
+
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== "object" || parsed === null) return []
+
+    const { lists } = parsed as Partial<StoredSavedLists>
+
+    return Array.isArray(lists) ? lists.filter(isSavedList) : []
+  } catch {
+    return []
+  }
+}
+
+/** Writes the named saves. Failures are ignored so the app keeps working. */
+export function saveSavedLists(lists: SavedList[]): void {
+  try {
+    const data: StoredSavedLists = { version: SAVED_LISTS_VERSION, lists }
+    window.localStorage.setItem(SAVED_LISTS_KEY, JSON.stringify(data))
   } catch {
     // Storage can be unavailable (private mode, quota). Nothing to do.
   }

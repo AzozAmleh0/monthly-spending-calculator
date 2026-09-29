@@ -5,6 +5,7 @@ import { DeleteConfirm } from "@/components/DeleteConfirm"
 import { ItemBreakdown } from "@/components/ItemBreakdown"
 import { ItemForm } from "@/components/ItemForm"
 import { ItemsList } from "@/components/ItemsList"
+import { SavedLists } from "@/components/SavedLists"
 import { Summary } from "@/components/Summary"
 import {
   Card,
@@ -18,7 +19,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { calculateTotals } from "@/lib/calculations"
 import { loadState, saveState } from "@/lib/storage"
 import type { StoredState } from "@/lib/storage"
-import type { Item, ItemDraft } from "@/types"
+import type { Item, ItemDraft, SavedList } from "@/types"
 
 export default function App() {
   const [state, setState] = useState(() => loadState())
@@ -48,6 +49,12 @@ export default function App() {
       items.map((item) => (item.id === id ? { ...item, ...draft } : item)),
     )
     setEditingId(null)
+  }
+
+  const handleLoadList = (list: SavedList) => {
+    commit({ items: list.items, income: list.income })
+    setEditingId(null)
+    setItemToDelete(null)
   }
 
   const handleDelete = () => {
@@ -123,6 +130,7 @@ export default function App() {
               onIncomeChange={(next) => commit({ income: next })}
             />
             <ItemBreakdown items={items} totalMonthly={totals.totalMonthly} />
+            <SavedLists items={items} income={income} onLoad={handleLoadList} />
           </div>
         </div>
       </div>

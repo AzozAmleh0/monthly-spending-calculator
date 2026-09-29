@@ -16,6 +16,8 @@ everything is saved on the device.
   times per day) and "every N periods" (e.g. every 2 days).
 - Monthly income, editable with the pencil on the income card, and a card for
   what is left after all the expenses.
+- Saved lists: give the current items and income a name, then load that list
+  back later, replace it, or delete it.
 - Totals update instantly on every add, edit or delete.
 - Everything is stored in the browser's `localStorage` — no account, no backend,
   no sync. Each device keeps its own list.
@@ -80,7 +82,7 @@ src/
     ui/                shadcn components
   lib/
     calculations.ts    occurrencesPerYear, monthlyCost, totals
-    storage.ts         load and save items and income in localStorage
+    storage.ts         load and save items, income and saved lists
     format.ts          ILS formatting and frequency labels
     schema.ts          zod schema for the item form
   types.ts
@@ -93,5 +95,6 @@ publishes `dist/` to GitHub Pages.
 
 ## A note on the data
 
-Items and your income live in the browser on each device. They do not sync
-between devices, and clearing the browser's site data for the app deletes them.
+Items, your income and your saved lists live in the browser on each device.
+They do not sync between devices, and clearing the browser's site data for the
+app deletes them.

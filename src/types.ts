@@ -18,3 +18,13 @@ export type Item = {
 }
 
 export type ItemDraft = Omit<Item, "id">
+
+/** A named copy of the whole list, kept so it can be loaded back later. */
+export type SavedList = {
+  id: string
+  name: string
+  /** ISO date of when it was saved. */
+  savedAt: string
+  items: Item[]
+  income: number
+}
