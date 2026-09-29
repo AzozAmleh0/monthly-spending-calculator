@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react"
 
+import { ItemForm } from "@/components/ItemForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { formatCurrency, frequencyLabel } from "@/lib/format"
-import type { Item } from "@/types"
+import type { Item, ItemDraft } from "@/types"
 
 type ItemsListProps = {
   items: Item[]
@@ -21,6 +22,8 @@ type ItemsListProps = {
   onEdit: (item: Item) => void
   onRequestDelete: (item: Item) => void
   onToggle: (id: string, enabled: boolean) => void
+  onSaveEdit: (id: string, draft: ItemDraft) => void
+  onCancelEdit: () => void
 }
 
 export function ItemsList({
@@ -29,6 +32,8 @@ export function ItemsList({
   onEdit,
   onRequestDelete,
   onToggle,
+  onSaveEdit,
+  onCancelEdit,
 }: ItemsListProps) {
   if (items.length === 0) {
     return (
@@ -43,64 +48,82 @@ export function ItemsList({
 
   return (
     <ul className="flex flex-col">
-      {items.map((item, index) => (
-        <li key={item.id}>
-          {index > 0 && <Separator />}
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-2 py-2",
-              item.id === editingId && "bg-muted ring-1 ring-foreground/10",
-            )}
-          >
-            {/* No tooltip here: a tooltip trigger takes over the switch's
-                own data-state, which is what colours it. */}
-            <Switch
-              checked={item.enabled}
-              aria-label={`Count ${item.name} in the totals`}
-              onCheckedChange={(checked) => onToggle(item.id, checked)}
-            />
+      {items.map((item, index) => {
+        const isEditing = item.id === editingId
 
-            <div className={cn("min-w-0 flex-1", !item.enabled && "opacity-60")}>
-              <p className="truncate font-medium">{item.name}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {formatCurrency(item.price)}
-                </span>
-                <Badge variant="secondary">{frequencyLabel(item.frequency)}</Badge>
-                {!item.enabled && <Badge variant="outline">Off</Badge>}
+        return (
+          <li key={item.id}>
+            {index > 0 && <Separator />}
+
+            {isEditing ? (
+              // The form takes over the row it belongs to, and the whole row
+              // stays highlighted until the edit is saved or cancelled.
+              <div className="my-1 rounded-lg bg-muted p-3 ring-1 ring-foreground/10">
+                <p className="mb-3 truncate text-sm font-medium">
+                  Editing {item.name}
+                </p>
+                <ItemForm
+                  key={item.id}
+                  item={item}
+                  onSubmit={(draft) => onSaveEdit(item.id, draft)}
+                  onCancel={onCancelEdit}
+                />
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg px-2 py-2">
+                {/* No tooltip here: a tooltip trigger takes over the switch's
+                    own data-state, which is what colours it. */}
+                <Switch
+                  checked={item.enabled}
+                  aria-label={`Count ${item.name} in the totals`}
+                  onCheckedChange={(checked) => onToggle(item.id, checked)}
+                />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Edit ${item.name}`}
-                  onClick={() => onEdit(item)}
-                >
-                  <Pencil />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Edit</TooltipContent>
-            </Tooltip>
+                <div className={cn("min-w-0 flex-1", !item.enabled && "opacity-60")}>
+                  <p className="truncate font-medium">{item.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatCurrency(item.price)}
+                    </span>
+                    <Badge variant="secondary">
+                      {frequencyLabel(item.frequency)}
+                    </Badge>
+                    {!item.enabled && <Badge variant="outline">Off</Badge>}
+                  </div>
+                </div>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Delete ${item.name}`}
-                  onClick={() => onRequestDelete(item)}
-                >
-                  <Trash2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Delete</TooltipContent>
-            </Tooltip>
-          </div>
-        </li>
-      ))}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Edit ${item.name}`}
+                      onClick={() => onEdit(item)}
+                    >
+                      <Pencil />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={() => onRequestDelete(item)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }

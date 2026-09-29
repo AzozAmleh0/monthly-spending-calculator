@@ -1,9 +1,8 @@
-import { useEffect } from "react"
+import { useId } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Pencil, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 
-import { Alert, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -34,23 +33,17 @@ import {
 import type { Item, ItemDraft } from "@/types"
 
 type ItemFormProps = {
-  editingItem: Item | null
-  onAdd: (draft: ItemDraft) => void
-  onSave: (id: string, draft: ItemDraft) => void
-  onCancelEdit: () => void
+  /** Given an item, the form edits it. Left out, it adds a new one. */
+  item?: Item
+  onSubmit: (draft: ItemDraft) => void
+  onCancel?: () => void
 }
 
-export function ItemForm({
-  editingItem,
-  onAdd,
-  onSave,
-  onCancelEdit,
-}: ItemFormProps) {
-  const form = useForm<ItemFormValues>({
-    resolver: zodResolver(itemFormSchema),
-    defaultValues: emptyFormValues,
-    mode: "onSubmit",
-  })
+export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
+  const isEditing = item !== undefined
+  // The add form and an open edit form are on the page at the same time, so
+  // every field needs its own id.
+  const uid = useId()
 
   const {
     formState: { errors },
@@ -59,43 +52,27 @@ export function ItemForm({
     reset,
     setValue,
     watch,
-  } = form
-
-  // Load the edited item into the form, or clear it when edit mode ends.
-  useEffect(() => {
-    reset(editingItem ? toFormValues(editingItem) : emptyFormValues)
-  }, [editingItem, reset])
+  } = useForm<ItemFormValues>({
+    resolver: zodResolver(itemFormSchema),
+    defaultValues: item ? toFormValues(item) : emptyFormValues,
+    mode: "onSubmit",
+  })
 
   const frequencyType = watch("frequencyType")
   const period = watch("period")
-  const isEditing = editingItem !== null
 
   const submit = handleSubmit((values) => {
-    const draft = toItemDraft(values)
-
-    if (editingItem) {
-      onSave(editingItem.id, draft)
-      return
-    }
-
-    onAdd(draft)
-    reset(emptyFormValues)
+    onSubmit(toItemDraft(values))
+    if (!isEditing) reset(emptyFormValues)
   })
 
   return (
     <form onSubmit={submit} noValidate>
       <FieldGroup>
-        {isEditing && (
-          <Alert>
-            <Pencil />
-            <AlertTitle>Editing: {editingItem.name}</AlertTitle>
-          </Alert>
-        )}
-
         <Field data-invalid={Boolean(errors.name)}>
-          <FieldLabel htmlFor="item-name">Item name</FieldLabel>
+          <FieldLabel htmlFor={`${uid}-name`}>Item name</FieldLabel>
           <Input
-            id="item-name"
+            id={`${uid}-name`}
             placeholder="Cigarettes"
             autoComplete="off"
             aria-invalid={Boolean(errors.name)}
@@ -105,9 +82,9 @@ export function ItemForm({
         </Field>
 
         <Field data-invalid={Boolean(errors.price)}>
-          <FieldLabel htmlFor="item-price">Price (₪)</FieldLabel>
+          <FieldLabel htmlFor={`${uid}-price`}>Price (₪)</FieldLabel>
           <Input
-            id="item-price"
+            id={`${uid}-price`}
             type="number"
             inputMode="decimal"
             step="any"
@@ -121,7 +98,7 @@ export function ItemForm({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="item-frequency">Frequency</FieldLabel>
+          <FieldLabel htmlFor={`${uid}-frequency`}>Frequency</FieldLabel>
           <Select
             value={frequencyType}
             onValueChange={(value) =>
@@ -130,7 +107,7 @@ export function ItemForm({
               })
             }
           >
-            <SelectTrigger id="item-frequency" className="w-full">
+            <SelectTrigger id={`${uid}-frequency`} className="w-full">
               <SelectValue placeholder="Choose a frequency" />
             </SelectTrigger>
             <SelectContent>
@@ -145,10 +122,10 @@ export function ItemForm({
 
         {frequencyType === "timesPer" && (
           <Field data-invalid={Boolean(errors.times)}>
-            <FieldLabel htmlFor="item-times">Times per period</FieldLabel>
+            <FieldLabel htmlFor={`${uid}-times`}>Times per period</FieldLabel>
             <div className="flex items-start gap-2">
               <Input
-                id="item-times"
+                id={`${uid}-times`}
                 type="number"
                 inputMode="numeric"
                 step="1"
@@ -162,7 +139,7 @@ export function ItemForm({
                 times per
               </span>
               <PeriodSelect
-                id="item-times-period"
+                id={`${uid}-times-period`}
                 value={period}
                 onChange={(value) => setValue("period", value)}
                 labels={PERIOD_LABELS}
@@ -174,11 +151,11 @@ export function ItemForm({
 
         {frequencyType === "every" && (
           <Field data-invalid={Boolean(errors.interval)}>
-            <FieldLabel htmlFor="item-interval">Every N periods</FieldLabel>
+            <FieldLabel htmlFor={`${uid}-interval`}>Every N periods</FieldLabel>
             <div className="flex items-start gap-2">
               <span className="pt-1.5 text-sm text-muted-foreground">every</span>
               <Input
-                id="item-interval"
+                id={`${uid}-interval`}
                 type="number"
                 inputMode="numeric"
                 step="1"
@@ -189,7 +166,7 @@ export function ItemForm({
                 {...register("interval")}
               />
               <PeriodSelect
-                id="item-interval-period"
+                id={`${uid}-interval-period`}
                 value={period}
                 onChange={(value) => setValue("period", value)}
                 labels={PERIOD_PLURAL_LABELS}
@@ -200,15 +177,15 @@ export function ItemForm({
         )}
 
         <Field orientation="horizontal">
-          <Button type="submit">
+          <Button type="submit" size={isEditing ? "sm" : "default"}>
             {isEditing ? "Save changes" : (
               <>
                 <Plus /> Add
               </>
             )}
           </Button>
-          {isEditing && (
-            <Button type="button" variant="outline" onClick={onCancelEdit}>
+          {isEditing && onCancel && (
+            <Button type="button" variant="outline" size="sm" onClick={onCancel}>
               Cancel
             </Button>
           )}

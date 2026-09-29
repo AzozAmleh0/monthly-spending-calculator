@@ -28,7 +28,6 @@ export default function App() {
 
   const { items, income } = state
 
-  const editingItem = items.find((item) => item.id === editingId) ?? null
   // Switched-off items stay in the list but are left out of every total.
   const activeItems = useMemo(() => items.filter((item) => item.enabled), [items])
   const totals = useMemo(() => calculateTotals(activeItems), [activeItems])
@@ -101,12 +100,7 @@ export default function App() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ItemForm
-                  editingItem={editingItem}
-                  onAdd={handleAdd}
-                  onSave={handleSave}
-                  onCancelEdit={() => setEditingId(null)}
-                />
+                <ItemForm onSubmit={handleAdd} />
               </CardContent>
             </Card>
 
@@ -126,6 +120,8 @@ export default function App() {
                     onEdit={(item) => setEditingId(item.id)}
                     onRequestDelete={setItemToDelete}
                     onToggle={handleToggle}
+                    onSaveEdit={handleSave}
+                    onCancelEdit={() => setEditingId(null)}
                   />
                 </ScrollArea>
               </CardContent>
