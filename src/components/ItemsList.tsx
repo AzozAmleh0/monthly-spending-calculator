@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react"
 
-import { ItemForm } from "@/components/ItemForm"
+import { ItemRowForm } from "@/components/ItemRowForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -56,19 +56,15 @@ export function ItemsList({
             {index > 0 && <Separator />}
 
             {isEditing ? (
-              // The form takes over the row it belongs to, and the whole row
+              // The fields take the place of the row they belong to, and it
               // stays highlighted until the edit is saved or cancelled.
-              <div className="my-1 rounded-lg bg-muted p-3 ring-1 ring-foreground/10">
-                <p className="mb-3 truncate text-sm font-medium">
-                  Editing {item.name}
-                </p>
-                <ItemForm
-                  key={item.id}
-                  item={item}
-                  onSubmit={(draft) => onSaveEdit(item.id, draft)}
-                  onCancel={onCancelEdit}
-                />
-              </div>
+              <ItemRowForm
+                key={item.id}
+                item={item}
+                onSubmit={(draft) => onSaveEdit(item.id, draft)}
+                onCancel={onCancelEdit}
+                onToggle={onToggle}
+              />
             ) : (
               <div className="flex items-center gap-2 rounded-lg px-2 py-2">
                 {/* No tooltip here: a tooltip trigger takes over the switch's

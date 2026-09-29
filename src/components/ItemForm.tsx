@@ -26,23 +26,18 @@ import {
   PERIOD_LABELS,
   PERIOD_PLURAL_LABELS,
   PERIODS,
-  toFormValues,
   toItemDraft,
   type ItemFormValues,
 } from "@/lib/schema"
-import type { Item, ItemDraft } from "@/types"
+import type { ItemDraft } from "@/types"
 
 type ItemFormProps = {
-  /** Given an item, the form edits it. Left out, it adds a new one. */
-  item?: Item
   onSubmit: (draft: ItemDraft) => void
-  onCancel?: () => void
 }
 
-export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
-  const isEditing = item !== undefined
-  // The add form and an open edit form are on the page at the same time, so
-  // every field needs its own id.
+/** Adds a new item. Editing one happens in its own row, in ItemRowForm. */
+export function ItemForm({ onSubmit }: ItemFormProps) {
+  // An edit form can be open at the same time, so ids have to be unique.
   const uid = useId()
 
   const {
@@ -54,7 +49,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
     watch,
   } = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues: item ? toFormValues(item) : emptyFormValues,
+    defaultValues: emptyFormValues,
     mode: "onSubmit",
   })
 
@@ -63,7 +58,7 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
 
   const submit = handleSubmit((values) => {
     onSubmit(toItemDraft(values))
-    if (!isEditing) reset(emptyFormValues)
+    reset(emptyFormValues)
   })
 
   return (
@@ -177,18 +172,9 @@ export function ItemForm({ item, onSubmit, onCancel }: ItemFormProps) {
         )}
 
         <Field orientation="horizontal">
-          <Button type="submit" size={isEditing ? "sm" : "default"}>
-            {isEditing ? "Save changes" : (
-              <>
-                <Plus /> Add
-              </>
-            )}
+          <Button type="submit">
+            <Plus /> Add
           </Button>
-          {isEditing && onCancel && (
-            <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
         </Field>
       </FieldGroup>
     </form>
