@@ -115,8 +115,12 @@ export function ItemBreakdown({ items, totalMonthly }: ItemBreakdownProps) {
             <TableBody>
               {sorted.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  {/* The text columns wrap so a long name cannot push the
+                      table wider than its card. */}
+                  <TableCell className="font-medium break-words whitespace-normal">
+                    {item.name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-normal">
                     {frequencyLabel(item.frequency)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
@@ -160,7 +164,9 @@ function SortableHead({
 
   return (
     <TableHead
-      className={align === "right" ? "text-right" : undefined}
+      // No right padding on this one: the button sits flush with the table's
+      // edge instead of spilling past it and forcing a scrollbar.
+      className={align === "right" ? "pr-0 text-right" : undefined}
       aria-sort={
         active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
       }
@@ -168,7 +174,7 @@ function SortableHead({
       <Button
         variant="ghost"
         size="sm"
-        className={align === "right" ? "-mr-2.5 ml-auto" : "-ml-2.5"}
+        className={align === "right" ? "ml-auto" : "-ml-2.5"}
         onClick={() => onSort(column)}
       >
         {label}
