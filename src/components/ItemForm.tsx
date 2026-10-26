@@ -70,45 +70,36 @@ export function ItemForm({ onSubmit, categories, categoryActions }: ItemFormProp
   return (
     <form onSubmit={submit} noValidate>
       <FieldGroup>
-        <Field data-invalid={Boolean(errors.name)}>
-          <FieldLabel htmlFor={`${uid}-name`}>Item name</FieldLabel>
-          <Input
-            id={`${uid}-name`}
-            placeholder="Cigarettes"
-            autoComplete="off"
-            aria-invalid={Boolean(errors.name)}
-            {...register("name")}
-          />
-          <FieldError errors={[errors.name]} />
-        </Field>
+        {/* Name and price share a row; the price only needs a few digits. */}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,8rem)] items-start gap-4">
+          <Field data-invalid={Boolean(errors.name)}>
+            <FieldLabel htmlFor={`${uid}-name`}>Item name</FieldLabel>
+            <Input
+              id={`${uid}-name`}
+              placeholder="Cigarettes"
+              autoComplete="off"
+              aria-invalid={Boolean(errors.name)}
+              {...register("name")}
+            />
+            <FieldError errors={[errors.name]} />
+          </Field>
 
-        <Field>
-          <FieldLabel htmlFor={`${uid}-category`}>Category</FieldLabel>
-          <CategoryPicker
-            id={`${uid}-category`}
-            className="w-full"
-            categories={categories}
-            value={categoryId}
-            onChange={(next) => setValue("categoryId", next)}
-            {...categoryActions}
-          />
-        </Field>
-
-        <Field data-invalid={Boolean(errors.price)}>
-          <FieldLabel htmlFor={`${uid}-price`}>Price (₪)</FieldLabel>
-          <Input
-            id={`${uid}-price`}
-            type="number"
-            inputMode="decimal"
-            step="any"
-            min="0"
-            placeholder="35"
-            autoComplete="off"
-            aria-invalid={Boolean(errors.price)}
-            {...register("price")}
-          />
-          <FieldError errors={[errors.price]} />
-        </Field>
+          <Field data-invalid={Boolean(errors.price)}>
+            <FieldLabel htmlFor={`${uid}-price`}>Price (₪)</FieldLabel>
+            <Input
+              id={`${uid}-price`}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min="0"
+              placeholder="35"
+              autoComplete="off"
+              aria-invalid={Boolean(errors.price)}
+              {...register("price")}
+            />
+            <FieldError errors={[errors.price]} />
+          </Field>
+        </div>
 
         <Field>
           <FieldLabel htmlFor={`${uid}-frequency`}>Frequency</FieldLabel>
@@ -188,6 +179,18 @@ export function ItemForm({ onSubmit, categories, categoryActions }: ItemFormProp
             <FieldError errors={[errors.interval]} />
           </Field>
         )}
+
+        <Field>
+          <FieldLabel htmlFor={`${uid}-category`}>Category</FieldLabel>
+          <CategoryPicker
+            id={`${uid}-category`}
+            className="w-full"
+            categories={categories}
+            value={categoryId}
+            onChange={(next) => setValue("categoryId", next)}
+            {...categoryActions}
+          />
+        </Field>
 
         <Field orientation="horizontal">
           <Button type="submit">
