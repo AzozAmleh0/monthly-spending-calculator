@@ -1,6 +1,7 @@
+import { useMemo } from "react"
 import { Pencil, Trash2 } from "lucide-react"
 
-import { CategoryDot } from "@/components/CategoryPicker"
+import { CategoryBadge } from "@/components/CategoryPicker"
 import type { CategoryActions } from "@/components/CategoryPicker"
 import { ItemRowForm } from "@/components/ItemRowForm"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +42,23 @@ export function ItemsList({
   onSaveEdit,
   onCancelEdit,
 }: ItemsListProps) {
+  // Grouped by category name, A to Z, with uncategorized items last. Inside a
+  // category the items keep the order they were added in.
+  const sorted = useMemo(() => {
+    const names = new Map(categories.map((category) => [category.id, category.name]))
+    const nameOf = (item: Item) =>
+      item.categoryId ? names.get(item.categoryId) : undefined
+
+    return [...items].sort((a, b) => {
+      const nameA = nameOf(a)
+      const nameB = nameOf(b)
+      if (nameA === nameB) return 0
+      if (nameA === undefined) return 1
+      if (nameB === undefined) return -1
+      return nameA.localeCompare(nameB, undefined, { sensitivity: "base" })
+    })
+  }, [items, categories])
+
   if (items.length === 0) {
     return (
       <Empty className="py-8">
@@ -54,7 +72,7 @@ export function ItemsList({
 
   return (
     <ul className="flex flex-col">
-      {items.map((item, index) => {
+      {sorted.map((item, index) => {
         const isEditing = item.id === editingId
         const category = categories.find((each) => each.id === item.categoryId)
 
@@ -93,12 +111,7 @@ export function ItemsList({
                     <Badge variant="secondary">
                       {frequencyLabel(item.frequency)}
                     </Badge>
-                    {category && (
-                      <Badge variant="outline" className="max-w-40">
-                        <CategoryDot color={category.color} />
-                        <span className="truncate">{category.name}</span>
-                      </Badge>
-                    )}
+                    {category && <CategoryBadge category={category} />}
                     {!item.enabled && <Badge variant="outline">Off</Badge>}
                   </div>
                 </div>
