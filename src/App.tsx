@@ -193,6 +193,7 @@ export default function App() {
             />
             <ItemBreakdown
               items={activeItems}
+              categories={categories}
               totalMonthly={totals.totalMonthly}
             />
             <SavedLists

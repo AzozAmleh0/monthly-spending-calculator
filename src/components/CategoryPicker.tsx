@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -331,6 +332,22 @@ export function CategoryPicker({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/** A category's dot and name, as shown next to an item. */
+export function CategoryBadge({
+  category,
+  className,
+}: {
+  category: Category
+  className?: string
+}) {
+  return (
+    <Badge variant="outline" className={cn("max-w-40", className)}>
+      <CategoryDot color={category.color} />
+      <span className="truncate">{category.name}</span>
+    </Badge>
   )
 }
 
