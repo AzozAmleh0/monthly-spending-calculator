@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, X } from "lucide-react"
 
+import { CategoryPicker } from "@/components/CategoryPicker"
+import type { CategoryActions } from "@/components/CategoryPicker"
 import { Button } from "@/components/ui/button"
 import { FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -25,10 +27,12 @@ import {
   toItemDraft,
   type ItemFormValues,
 } from "@/lib/schema"
-import type { Item, ItemDraft } from "@/types"
+import type { Category, Item, ItemDraft } from "@/types"
 
 type ItemRowFormProps = {
   item: Item
+  categories: Category[]
+  categoryActions: CategoryActions
   onSubmit: (draft: ItemDraft) => void
   onCancel: () => void
   onToggle: (id: string, enabled: boolean) => void
@@ -36,10 +40,12 @@ type ItemRowFormProps = {
 
 /**
  * The editing state of a row in the items list: the same layout as the row it
- * replaces, with the name, price and frequency turned into fields.
+ * replaces, with the name, category, price and frequency turned into fields.
  */
 export function ItemRowForm({
   item,
+  categories,
+  categoryActions,
   onSubmit,
   onCancel,
   onToggle,
@@ -58,6 +64,7 @@ export function ItemRowForm({
 
   const frequencyType = watch("frequencyType")
   const period = watch("period")
+  const categoryId = watch("categoryId")
 
   return (
     <form
@@ -80,6 +87,15 @@ export function ItemRowForm({
           aria-label="Item name"
           aria-invalid={Boolean(errors.name)}
           {...register("name")}
+        />
+
+        <CategoryPicker
+          className="w-full bg-background"
+          aria-label="Category"
+          categories={categories}
+          value={categoryId}
+          onChange={(next) => setValue("categoryId", next)}
+          {...categoryActions}
         />
 
         <div className="flex flex-wrap items-center gap-2">

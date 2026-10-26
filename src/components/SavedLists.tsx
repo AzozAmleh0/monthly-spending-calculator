@@ -33,11 +33,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { calculateTotals } from "@/lib/calculations"
 import { formatCurrency } from "@/lib/format"
 import { loadSavedLists, saveSavedLists } from "@/lib/storage"
-import type { Item, SavedList } from "@/types"
+import type { Category, Item, SavedList } from "@/types"
 
 type SavedListsProps = {
   items: Item[]
   income: number
+  categories: Category[]
   onLoad: (list: SavedList) => void
 }
 
@@ -47,7 +48,12 @@ type Pending =
   | { type: "load"; list: SavedList }
   | { type: "delete"; list: SavedList }
 
-export function SavedLists({ items, income, onLoad }: SavedListsProps) {
+export function SavedLists({
+  items,
+  income,
+  categories,
+  onLoad,
+}: SavedListsProps) {
   const [lists, setLists] = useState<SavedList[]>(() => loadSavedLists())
   const [name, setName] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +71,7 @@ export function SavedLists({ items, income, onLoad }: SavedListsProps) {
       savedAt: new Date().toISOString(),
       items,
       income,
+      categories,
     }
 
     commit(

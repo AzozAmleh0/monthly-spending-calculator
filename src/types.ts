@@ -10,6 +10,24 @@ export type Frequency =
 
 export type FrequencyType = Frequency["type"]
 
+export type CategoryColor =
+  | "red"
+  | "orange"
+  | "amber"
+  | "green"
+  | "teal"
+  | "sky"
+  | "blue"
+  | "violet"
+  | "pink"
+  | "slate"
+
+export type Category = {
+  id: string
+  name: string
+  color: CategoryColor
+}
+
 export type Item = {
   id: string
   name: string
@@ -17,6 +35,8 @@ export type Item = {
   frequency: Frequency
   /** Switched-off items stay in the list but are left out of every total. */
   enabled: boolean
+  /** null means the item has no category. */
+  categoryId: string | null
 }
 
 /** What the form produces: the rest of an item is managed by the app. */
@@ -30,4 +50,6 @@ export type SavedList = {
   savedAt: string
   items: Item[]
   income: number
+  /** The categories the items used when the list was saved. */
+  categories: Category[]
 }

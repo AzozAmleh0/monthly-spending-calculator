@@ -18,6 +18,10 @@ everything is saved on the device.
   what is left after all the expenses.
 - Saved lists: give the current items and income a name, then load that list
   back later, replace it, or delete it.
+- Categories: pick one for each item, or type a new name in the category
+  picker to create it. Rename, recolor or delete a category from the same
+  picker. A card shows the monthly cost of each category, and opens to list
+  the expenses in it.
 - Switch any item off to keep it in the list but leave it out of every total,
   and back on when you want it counted again.
 - The monthly cost table sorts by item name, by how often you pay, or by what

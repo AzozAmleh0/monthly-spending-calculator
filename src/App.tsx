@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react"
 
 import { Balance } from "@/components/Balance"
+import { CategoryBreakdown } from "@/components/CategoryBreakdown"
+import type { CategoryActions } from "@/components/CategoryPicker"
 import { DeleteConfirm } from "@/components/DeleteConfirm"
 import { ItemBreakdown } from "@/components/ItemBreakdown"
 import { ItemForm } from "@/components/ItemForm"
@@ -17,16 +19,17 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { calculateTotals } from "@/lib/calculations"
+import { mergeCategories, nextCategoryColor } from "@/lib/categories"
 import { loadState, saveState } from "@/lib/storage"
 import type { StoredState } from "@/lib/storage"
-import type { Item, ItemDraft, SavedList } from "@/types"
+import type { Category, Item, ItemDraft, SavedList } from "@/types"
 
 export default function App() {
   const [state, setState] = useState(() => loadState())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
 
-  const { items, income } = state
+  const { items, income, categories } = state
 
   // Switched-off items stay in the list but are left out of every total.
   const activeItems = useMemo(() => items.filter((item) => item.enabled), [items])
@@ -42,15 +45,54 @@ export default function App() {
 
   const commitItems = (nextItems: Item[]) => commit({ items: nextItems })
 
+  /** A form can still hold a category that was deleted while it was open. */
+  const withKnownCategory = (draft: ItemDraft): ItemDraft =>
+    draft.categoryId && !categories.some((category) => category.id === draft.categoryId)
+      ? { ...draft, categoryId: null }
+      : draft
+
   const handleAdd = (draft: ItemDraft) => {
-    commitItems([...items, { id: crypto.randomUUID(), enabled: true, ...draft }])
+    commitItems([
+      ...items,
+      { id: crypto.randomUUID(), enabled: true, ...withKnownCategory(draft) },
+    ])
   }
 
   const handleSave = (id: string, draft: ItemDraft) => {
     commitItems(
-      items.map((item) => (item.id === id ? { ...item, ...draft } : item)),
+      items.map((item) =>
+        item.id === id ? { ...item, ...withKnownCategory(draft) } : item,
+      ),
     )
     setEditingId(null)
+  }
+
+  const categoryActions: CategoryActions = {
+    onCreate: (name) => {
+      const category: Category = {
+        id: crypto.randomUUID(),
+        name,
+        color: nextCategoryColor(categories),
+      }
+      commit({ categories: [...categories, category] })
+      return category
+    },
+    onUpdate: (id, changes) => {
+      commit({
+        categories: categories.map((category) =>
+          category.id === id ? { ...category, ...changes } : category,
+        ),
+      })
+    },
+    // Its items stay, with no category.
+    onDelete: (id) => {
+      commit({
+        categories: categories.filter((category) => category.id !== id),
+        items: items.map((item) =>
+          item.categoryId === id ? { ...item, categoryId: null } : item,
+        ),
+      })
+    },
   }
 
   const handleToggle = (id: string, enabled: boolean) => {
@@ -60,7 +102,9 @@ export default function App() {
   }
 
   const handleLoadList = (list: SavedList) => {
-    commit({ items: list.items, income: list.income })
+    // Categories are kept across lists, so loading one adds any it is missing.
+    const merged = mergeCategories(categories, list.categories, list.items)
+    commit({ items: merged.items, income: list.income, categories: merged.categories })
     setEditingId(null)
     setItemToDelete(null)
   }
@@ -100,7 +144,11 @@ export default function App() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ItemForm onSubmit={handleAdd} />
+                <ItemForm
+                  onSubmit={handleAdd}
+                  categories={categories}
+                  categoryActions={categoryActions}
+                />
               </CardContent>
             </Card>
 
@@ -116,6 +164,8 @@ export default function App() {
                 <ScrollArea className="md:h-full">
                   <ItemsList
                     items={items}
+                    categories={categories}
+                    categoryActions={categoryActions}
                     editingId={editingId}
                     onEdit={(item) => setEditingId(item.id)}
                     onRequestDelete={setItemToDelete}
@@ -136,11 +186,21 @@ export default function App() {
               totalMonthly={totals.totalMonthly}
               onIncomeChange={(next) => commit({ income: next })}
             />
+            <CategoryBreakdown
+              items={activeItems}
+              categories={categories}
+              totalMonthly={totals.totalMonthly}
+            />
             <ItemBreakdown
               items={activeItems}
               totalMonthly={totals.totalMonthly}
             />
-            <SavedLists items={items} income={income} onLoad={handleLoadList} />
+            <SavedLists
+              items={items}
+              income={income}
+              categories={categories}
+              onLoad={handleLoadList}
+            />
           </div>
         </div>
       </div>

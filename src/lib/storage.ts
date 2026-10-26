@@ -1,22 +1,24 @@
-import type { Frequency, Item, Period, SavedList } from "@/types"
+import { isCategoryColor } from "@/lib/categories"
+import type { Category, Frequency, Item, Period, SavedList } from "@/types"
 
 const STORAGE_KEY = "spending-calculator:items"
 const SAVED_LISTS_KEY = "spending-calculator:saved-lists"
-const STORAGE_VERSION = 2
-const SAVED_LISTS_VERSION = 1
+const STORAGE_VERSION = 3
+const SAVED_LISTS_VERSION = 2
 
 /** Everything the app keeps on the device. */
 export type StoredState = {
   items: Item[]
   /** Monthly income in ILS. 0 means "not set yet". */
   income: number
+  categories: Category[]
 }
 
 type StoredData = StoredState & {
   version: number
 }
 
-export const emptyState: StoredState = { items: [], income: 0 }
+export const emptyState: StoredState = { items: [], income: 0, categories: [] }
 
 const PERIODS: Period[] = ["day", "week", "month", "year"]
 
@@ -77,6 +79,8 @@ function toItem(value: unknown): Item | null {
     frequency: item.frequency as Item["frequency"],
     // Items saved before the switch existed were all counted.
     enabled: item.enabled !== false,
+    // Items saved before categories existed have none.
+    categoryId: typeof item.categoryId === "string" ? item.categoryId : null,
   }
 }
 
@@ -88,10 +92,48 @@ function toItems(value: unknown): Item[] {
     .filter((item): item is Item => item !== null)
 }
 
+function toCategory(value: unknown): Category | null {
+  if (typeof value !== "object" || value === null) return null
+  const category = value as Record<string, unknown>
+
+  const isValid =
+    typeof category.id === "string" &&
+    category.id.length > 0 &&
+    typeof category.name === "string" &&
+    category.name.trim().length > 0 &&
+    isCategoryColor(category.color)
+
+  if (!isValid) return null
+
+  return {
+    id: category.id as string,
+    name: category.name as string,
+    color: category.color as Category["color"],
+  }
+}
+
+function toCategories(value: unknown): Category[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map(toCategory)
+    .filter((category): category is Category => category !== null)
+}
+
+/** Items pointing at a category that no longer exists lose it. */
+function withKnownCategories(items: Item[], categories: Category[]): Item[] {
+  const ids = new Set(categories.map((category) => category.id))
+  return items.map((item) =>
+    item.categoryId && !ids.has(item.categoryId)
+      ? { ...item, categoryId: null }
+      : item,
+  )
+}
+
 /**
- * Reads the saved items and income. Returns empty values if nothing is saved
- * or the saved data cannot be read. Data written by version 1 (which had no
- * income) still loads.
+ * Reads the saved items, income and categories. Returns empty values if
+ * nothing is saved or the saved data cannot be read. Data written by older
+ * versions (no income, no categories) still loads.
  */
 export function loadState(): StoredState {
   try {
@@ -101,11 +143,13 @@ export function loadState(): StoredState {
     const parsed: unknown = JSON.parse(raw)
     if (typeof parsed !== "object" || parsed === null) return emptyState
 
-    const { items, income } = parsed as Partial<StoredData>
+    const { items, income, categories } = parsed as Partial<StoredData>
+    const knownCategories = toCategories(categories)
 
     return {
-      items: toItems(items),
+      items: withKnownCategories(toItems(items), knownCategories),
       income: isIncome(income) ? income : 0,
+      categories: knownCategories,
     }
   } catch {
     return emptyState
@@ -148,6 +192,8 @@ function toSavedList(value: unknown): SavedList | null {
     savedAt: list.savedAt as string,
     items: toItems(list.items),
     income: list.income as number,
+    // Lists saved before categories existed have none.
+    categories: toCategories(list.categories),
   }
 }
 

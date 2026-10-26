@@ -1,5 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react"
 
+import { CategoryDot } from "@/components/CategoryPicker"
+import type { CategoryActions } from "@/components/CategoryPicker"
 import { ItemRowForm } from "@/components/ItemRowForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,10 +16,12 @@ import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { formatCurrency, frequencyLabel } from "@/lib/format"
-import type { Item, ItemDraft } from "@/types"
+import type { Category, Item, ItemDraft } from "@/types"
 
 type ItemsListProps = {
   items: Item[]
+  categories: Category[]
+  categoryActions: CategoryActions
   editingId: string | null
   onEdit: (item: Item) => void
   onRequestDelete: (item: Item) => void
@@ -28,6 +32,8 @@ type ItemsListProps = {
 
 export function ItemsList({
   items,
+  categories,
+  categoryActions,
   editingId,
   onEdit,
   onRequestDelete,
@@ -50,6 +56,7 @@ export function ItemsList({
     <ul className="flex flex-col">
       {items.map((item, index) => {
         const isEditing = item.id === editingId
+        const category = categories.find((each) => each.id === item.categoryId)
 
         return (
           <li key={item.id}>
@@ -61,6 +68,8 @@ export function ItemsList({
               <ItemRowForm
                 key={item.id}
                 item={item}
+                categories={categories}
+                categoryActions={categoryActions}
                 onSubmit={(draft) => onSaveEdit(item.id, draft)}
                 onCancel={onCancelEdit}
                 onToggle={onToggle}
@@ -84,6 +93,12 @@ export function ItemsList({
                     <Badge variant="secondary">
                       {frequencyLabel(item.frequency)}
                     </Badge>
+                    {category && (
+                      <Badge variant="outline" className="max-w-40">
+                        <CategoryDot color={category.color} />
+                        <span className="truncate">{category.name}</span>
+                      </Badge>
+                    )}
                     {!item.enabled && <Badge variant="outline">Off</Badge>}
                   </div>
                 </div>

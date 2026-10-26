@@ -52,6 +52,8 @@ export const itemFormSchema = z
     times: z.string(),
     interval: z.string(),
     period: z.enum(PERIODS),
+    /** Empty means no category. */
+    categoryId: z.string(),
   })
   .superRefine((values, ctx) => {
     if (values.frequencyType === "timesPer") {
@@ -71,6 +73,7 @@ export const emptyFormValues: ItemFormValues = {
   times: "1",
   interval: "2",
   period: "day",
+  categoryId: "",
 }
 
 /** Turns validated form values into the item shape used by the app. */
@@ -97,6 +100,7 @@ export function toItemDraft(values: ItemFormValues): ItemDraft {
     name: values.name.trim(),
     price: Number(values.price.trim()),
     frequency,
+    categoryId: values.categoryId || null,
   }
 }
 
@@ -115,6 +119,7 @@ export function toFormValues(item: Item): ItemFormValues {
       frequency.type === "timesPer" || frequency.type === "every"
         ? frequency.period
         : emptyFormValues.period,
+    categoryId: item.categoryId ?? "",
   }
 }
 

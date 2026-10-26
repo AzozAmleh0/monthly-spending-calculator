@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus } from "lucide-react"
 
+import { CategoryPicker } from "@/components/CategoryPicker"
+import type { CategoryActions } from "@/components/CategoryPicker"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -29,14 +31,16 @@ import {
   toItemDraft,
   type ItemFormValues,
 } from "@/lib/schema"
-import type { ItemDraft } from "@/types"
+import type { Category, ItemDraft } from "@/types"
 
 type ItemFormProps = {
   onSubmit: (draft: ItemDraft) => void
+  categories: Category[]
+  categoryActions: CategoryActions
 }
 
 /** Adds a new item. Editing one happens in its own row, in ItemRowForm. */
-export function ItemForm({ onSubmit }: ItemFormProps) {
+export function ItemForm({ onSubmit, categories, categoryActions }: ItemFormProps) {
   // An edit form can be open at the same time, so ids have to be unique.
   const uid = useId()
 
@@ -55,10 +59,12 @@ export function ItemForm({ onSubmit }: ItemFormProps) {
 
   const frequencyType = watch("frequencyType")
   const period = watch("period")
+  const categoryId = watch("categoryId")
 
   const submit = handleSubmit((values) => {
     onSubmit(toItemDraft(values))
-    reset(emptyFormValues)
+    // Keep the category: several items in a row often share one.
+    reset({ ...emptyFormValues, categoryId: values.categoryId })
   })
 
   return (
@@ -74,6 +80,18 @@ export function ItemForm({ onSubmit }: ItemFormProps) {
             {...register("name")}
           />
           <FieldError errors={[errors.name]} />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor={`${uid}-category`}>Category</FieldLabel>
+          <CategoryPicker
+            id={`${uid}-category`}
+            className="w-full"
+            categories={categories}
+            value={categoryId}
+            onChange={(next) => setValue("categoryId", next)}
+            {...categoryActions}
+          />
         </Field>
 
         <Field data-invalid={Boolean(errors.price)}>
